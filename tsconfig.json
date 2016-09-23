@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "rootDir": "src",
+        "outDir": "dist",
+        "target": "es5"
+        
+    },
+    "exclude": [
+        "bower_components"
+    ]
+}
