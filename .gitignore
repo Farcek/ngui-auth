@@ -1,1 +1,4 @@
-.vscode/symbols.json
+.vscode/*
+bower_components/*
+typings/*
+

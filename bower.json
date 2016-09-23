@@ -1,0 +1,23 @@
+{
+  "name": "ngui-auth",
+  "authors": [
+    "Farcek <farcek@gmail.com>"
+  ],
+  "description": "ngui module",
+  "main": "dist/auth.js",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.5.8",
+    "angular-cookies": "^1.5.8",
+    "jquery": "^3.1.1",
+    "angular-ui-router": "^0.3.1"
+  }
+}
