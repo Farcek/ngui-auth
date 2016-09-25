@@ -148,3 +148,10 @@ namespace ngui.auth {
         .run(Initer)
         ;
 }
+
+namespace angular.ui {
+
+    export interface IState {
+        secret?: boolean
+    }
+}

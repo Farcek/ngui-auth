@@ -31,3 +31,8 @@ declare namespace ngui.auth {
         returnToState(state: any): void;
     }
 }
+declare namespace angular.ui {
+    interface IState {
+        secret?: boolean;
+    }
+}
