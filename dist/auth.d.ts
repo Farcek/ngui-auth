@@ -17,19 +17,25 @@ declare namespace ngui.auth {
         token: string;
         username: string;
     }
+    interface IReturnState {
+        state: string;
+        params: {};
+    }
     class AuthService {
-        private $rootScope;
         private $state;
         private $authConfig;
         private $cookies;
         static $inject: string[];
         private _data;
-        constructor($rootScope: any, $state: ng.ui.IStateService, $authConfig: IAuthConfig, $cookies: ng.cookies.ICookiesService);
+        private _returnState;
+        constructor($state: ng.ui.IStateService, $authConfig: IAuthConfig, $cookies: ng.cookies.ICookiesService);
         data: IAuthData;
         token: string;
+        returnState: IReturnState;
         setData(data: IAuthData): void;
+        setReturnState(state: string, params?: {}): void;
         clear(): void;
-        returnToState(state: any): void;
+        returnToState(stateName?: string, stateParams?: {}): void;
     }
 }
 declare namespace angular.ui {

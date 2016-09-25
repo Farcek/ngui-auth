@@ -42,8 +42,7 @@ var ngui;
             };
         }
         var AuthService = (function () {
-            function AuthService($rootScope, $state, $authConfig, $cookies) {
-                this.$rootScope = $rootScope;
+            function AuthService($state, $authConfig, $cookies) {
                 this.$state = $state;
                 this.$authConfig = $authConfig;
                 this.$cookies = $cookies;
@@ -64,27 +63,38 @@ var ngui;
                 enumerable: true,
                 configurable: true
             });
+            Object.defineProperty(AuthService.prototype, "returnState", {
+                get: function () {
+                    return this._returnState;
+                },
+                enumerable: true,
+                configurable: true
+            });
             AuthService.prototype.setData = function (data) {
                 this._data = data;
+            };
+            AuthService.prototype.setReturnState = function (state, params) {
+                this._returnState = {
+                    state: state,
+                    params: params
+                };
             };
             AuthService.prototype.clear = function () {
                 this._data = null;
                 this.$cookies.remove(this.$authConfig.cookieName);
             };
-            AuthService.prototype.returnToState = function (state) {
-                if (Array.isArray(state) && state.length > 0) {
-                    this.$state.go(state[0], state.length > 1 ? state[1] : null);
+            AuthService.prototype.returnToState = function (stateName, stateParams) {
+                if (stateName) {
+                    this.$state.go(stateName, stateParams);
                 }
-                else if (Array.isArray(this.$rootScope.$returnToState) && this.$rootScope.$returnToState.length > 0) {
-                    var to = this.$rootScope.$returnToState[0];
-                    var params = this.$rootScope.$returnToState.length > 1 ? this.$rootScope.$returnToState[1] : null;
-                    this.$state.go(to, params);
+                else if (this._returnState && this._returnState.state) {
+                    this.$state.go(this._returnState.state, this._returnState.params);
                 }
                 else {
                     this.$state.go(this.$authConfig.homeState);
                 }
             };
-            AuthService.$inject = ['$rootScope', '$state', '$nguiAuthConfig', '$cookies'];
+            AuthService.$inject = ['$state', '$nguiAuthConfig', '$cookies'];
             return AuthService;
         }());
         auth.AuthService = AuthService;
@@ -126,7 +136,7 @@ var ngui;
                 $rootScope.$on("$stateChangeStart", function (event, toState, toParams, fromState, fromParams) {
                     var to = $state.get(toState.name);
                     if (toState.secret && !$authService.token) {
-                        $rootScope.$returnToState = [toState, toParams];
+                        $authService.setReturnState(toState, toParams);
                         $state.transitionTo($authConfig.loginState);
                         event.preventDefault();
                     }

@@ -59,11 +59,13 @@ namespace ngui.auth {
         token: string
         username: string
     }
+    export interface IReturnState { state: string, params: {} }
 
     export class AuthService {
-        public static $inject = ['$rootScope', '$state', '$nguiAuthConfig', '$cookies'];
+        public static $inject = ['$state', '$nguiAuthConfig', '$cookies'];
         private _data: IAuthData
-        constructor(private $rootScope, private $state: ng.ui.IStateService, private $authConfig: IAuthConfig, private $cookies: ng.cookies.ICookiesService) {
+        private _returnState: IReturnState
+        constructor(private $state: ng.ui.IStateService, private $authConfig: IAuthConfig, private $cookies: ng.cookies.ICookiesService) {
             this._data = $cookies.getObject($authConfig.cookieName);
             return this;
         }
@@ -73,20 +75,27 @@ namespace ngui.auth {
         get token(): string {
             return this._data && this._data.token;
         }
+        get returnState(): IReturnState {
+            return this._returnState;
+        }
         setData(data: IAuthData) {
             this._data = data
+        }
+        setReturnState(state: string, params?: {}) {
+            this._returnState = {
+                state: state,
+                params: params
+            }
         }
         clear() {
             this._data = null;
             this.$cookies.remove(this.$authConfig.cookieName);
         }
-        returnToState(state) {
-            if (Array.isArray(state) && state.length > 0) {
-                this.$state.go(state[0], state.length > 1 ? state[1] : null);
-            } else if (Array.isArray(this.$rootScope.$returnToState) && this.$rootScope.$returnToState.length > 0) {
-                var to = this.$rootScope.$returnToState[0];
-                var params = this.$rootScope.$returnToState.length > 1 ? this.$rootScope.$returnToState[1] : null;
-                this.$state.go(to, params);
+        returnToState(stateName?: string, stateParams?: {}) {
+            if (stateName) {
+                this.$state.go(stateName, stateParams);
+            } else if (this._returnState && this._returnState.state) {
+                this.$state.go(this._returnState.state, this._returnState.params);
             } else {
                 this.$state.go(this.$authConfig.homeState);
             }
@@ -129,7 +138,7 @@ namespace ngui.auth {
 
                 if (toState.secret && !$authService.token) {
 
-                    $rootScope.$returnToState = [toState, toParams];
+                    $authService.setReturnState(toState,toParams);
 
                     $state.transitionTo($authConfig.loginState);
                     event.preventDefault();
