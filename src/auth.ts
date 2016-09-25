@@ -67,7 +67,7 @@ namespace ngui.auth {
         private _returnState: IReturnState
         constructor(private $state: ng.ui.IStateService, private $authConfig: IAuthConfig, private $cookies: ng.cookies.ICookiesService) {
             this._data = $cookies.getObject($authConfig.cookieName);
-            return this;
+
         }
         get data(): IAuthData {
             return this._data;
@@ -75,11 +75,15 @@ namespace ngui.auth {
         get token(): string {
             return this._data && this._data.token;
         }
+        get isLogined(): boolean {
+            return !!(this._data && this._data.token);
+        }
         get returnState(): IReturnState {
             return this._returnState;
         }
         setData(data: IAuthData) {
             this._data = data
+            this.$cookies.putObject(this.$authConfig.cookieName, this._data);
         }
         setReturnState(state: string, params?: {}) {
             this._returnState = {
@@ -101,35 +105,38 @@ namespace ngui.auth {
             }
         }
     }
-    class SecureTokenInjector {
-        public static $inject = ['$q', '$injector'];
-        constructor(private $q, private $injector) {
-            return this;
-        }
-        request(config) {
-            if (config.notToken || config.noToken) {
-                return config;
-            }
 
-            return this.$q(function (resolve, reject) {
-                var authService: AuthService = this.$injector.get('$nguiAuthService');
-                var authConfig: IAuthConfig = this.$injector.get('$nguiAuthConfig');
+    export module SecureTokenInjector {
+        export function factory($q, $injector) {
+            return {
+                request: (config) => {
+                    if (config.notToken || config.noToken) {
+                        return config;
+                    }
+
+                    return $q(function (resolve, reject) {
+                        var authService: AuthService = $injector.get('$nguiAuthService');
+                        var authConfig: IAuthConfig = $injector.get('$nguiAuthConfig');
 
 
-                if (config.headers && authService.token) {
-                    config.headers[authConfig.headerName] = authConfig.headerPrefix + ' ' + authService.token;
+                        if (config.headers && authService.token) {
+                            config.headers[authConfig.headerName] = authConfig.headerPrefix + ' ' + authService.token;
+                        }
+                        resolve(config);
+                    });
+                },
+                responseError: (response) => {
+                    if (response.status === 401) {
+                        var authService: AuthService = $injector.get('$authService');
+                        authService.clear();
+                    }
+                    return $q.reject(response);
                 }
-                resolve(config);
-            });
-        }
-        responseError(response) {
-            if (response.status === 401) {
-                var authService: AuthService = this.$injector.get('$authService');
-                authService.clear();
             }
-            return this.$q.reject(response);
         }
+        factory.$inject = ['$q', '$injector'];
     }
+
     class Initer {
         public static $inject = ['$rootScope', '$state', '$nguiAuthService', '$nguiAuthConfig'];
         constructor(private $rootScope, private $state: ng.ui.IStateService, private $authService: AuthService, private $authConfig: IAuthConfig) {
@@ -138,7 +145,7 @@ namespace ngui.auth {
 
                 if (toState.secret && !$authService.token) {
 
-                    $authService.setReturnState(toState,toParams);
+                    $authService.setReturnState(toState, toParams);
 
                     $state.transitionTo($authConfig.loginState);
                     event.preventDefault();
@@ -148,8 +155,8 @@ namespace ngui.auth {
     }
     angular.module("ngui-auth", ['ng', 'ngCookies', 'ui.router'])
         .provider('$nguiAuthConfig', $authConfigProvider)
-        .factory('$nguiAuthService', AuthService)
-        .factory('$nguiAuthSecureTokenInjector', SecureTokenInjector)
+        .service('$nguiAuthService', AuthService)
+        .factory('$nguiAuthSecureTokenInjector', SecureTokenInjector.factory)
         .config(['$httpProvider', function ($httpProvider) {
             $httpProvider.interceptors.push('$nguiAuthSecureTokenInjector');
         }])

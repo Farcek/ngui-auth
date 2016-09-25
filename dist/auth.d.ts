@@ -31,11 +31,18 @@ declare namespace ngui.auth {
         constructor($state: ng.ui.IStateService, $authConfig: IAuthConfig, $cookies: ng.cookies.ICookiesService);
         data: IAuthData;
         token: string;
+        isLogined: boolean;
         returnState: IReturnState;
         setData(data: IAuthData): void;
         setReturnState(state: string, params?: {}): void;
         clear(): void;
         returnToState(stateName?: string, stateParams?: {}): void;
+    }
+    module SecureTokenInjector {
+        function factory($q: any, $injector: any): {
+            request: (config: any) => any;
+            responseError: (response: any) => any;
+        };
     }
 }
 declare namespace angular.ui {
