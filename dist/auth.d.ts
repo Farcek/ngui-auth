@@ -13,20 +13,21 @@ declare namespace ngui.auth {
         headerName: string;
         headerPrefix: string;
     }
+    interface IAuthData {
+        token: string;
+        username: string;
+    }
     class AuthService {
         private $rootScope;
         private $state;
         private $authConfig;
         private $cookies;
         static $inject: string[];
-        private cnToken;
-        private _token;
         private _data;
         constructor($rootScope: any, $state: ng.ui.IStateService, $authConfig: IAuthConfig, $cookies: ng.cookies.ICookiesService);
-        data: string;
+        data: IAuthData;
         token: string;
-        setData(data: string): void;
-        setToken(token: string): void;
+        setData(data: IAuthData): void;
         clear(): void;
         returnToState(state: any): void;
     }

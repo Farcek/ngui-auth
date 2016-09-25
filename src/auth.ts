@@ -55,31 +55,30 @@ namespace ngui.auth {
             }
         };
     }
+    export interface IAuthData {
+        token: string
+        username: string
+    }
+
     export class AuthService {
-        public static $inject = ['$rootScope', '$state', '$authConfig', '$cookies'];
-        private cnToken: string
-        private _token: string
-        private _data: string
+        public static $inject = ['$rootScope', '$state', '$nguiAuthConfig', '$cookies'];
+        private _data: IAuthData
         constructor(private $rootScope, private $state: ng.ui.IStateService, private $authConfig: IAuthConfig, private $cookies: ng.cookies.ICookiesService) {
-            this.cnToken = $authConfig.cookieName;
-            this._token = $cookies.get(this.cnToken);
+            this._data = $cookies.getObject($authConfig.cookieName);
+            return this;
         }
-        get data(): string {
-            return '';
+        get data(): IAuthData {
+            return this._data;
         }
         get token(): string {
-            return '';
+            return this._data && this._data.token;
         }
-        setData(data: string) {
+        setData(data: IAuthData) {
             this._data = data
         }
-        setToken(token: string) {
-            this.$cookies.put(this.cnToken, this._token = token);
-        }
         clear() {
-            this._token = null;
             this._data = null;
-            this.$cookies.remove(this.cnToken);
+            this.$cookies.remove(this.$authConfig.cookieName);
         }
         returnToState(state) {
             if (Array.isArray(state) && state.length > 0) {
@@ -96,7 +95,7 @@ namespace ngui.auth {
     class SecureTokenInjector {
         public static $inject = ['$q', '$injector'];
         constructor(private $q, private $injector) {
-
+            return this;
         }
         request(config) {
             if (config.notToken || config.noToken) {
@@ -104,8 +103,8 @@ namespace ngui.auth {
             }
 
             return this.$q(function (resolve, reject) {
-                var authService: AuthService = this.$injector.get('$authService');
-                var authConfig: IAuthConfig = this.$injector.get('$authConfig');
+                var authService: AuthService = this.$injector.get('$nguiAuthService');
+                var authConfig: IAuthConfig = this.$injector.get('$nguiAuthConfig');
 
 
                 if (config.headers && authService.token) {
@@ -123,7 +122,7 @@ namespace ngui.auth {
         }
     }
     class Initer {
-        public static $inject = ['$rootScope', '$state', '$authService', '$authConfig'];
+        public static $inject = ['$rootScope', '$state', '$nguiAuthService', '$nguiAuthConfig'];
         constructor(private $rootScope, private $state: ng.ui.IStateService, private $authService: AuthService, private $authConfig: IAuthConfig) {
             $rootScope.$on("$stateChangeStart", (event, toState, toParams, fromState, fromParams) => {
                 var to = $state.get(toState.name);
@@ -138,12 +137,12 @@ namespace ngui.auth {
             });
         }
     }
-    angular.module("ngui-auth", [])
-        .provider('$authConfig', $authConfigProvider)
-        .factory('$authService', AuthService)
-        .factory('$authSecureTokenInjector', SecureTokenInjector)
+    angular.module("ngui-auth", ['ng', 'ngCookies', 'ui.router'])
+        .provider('$nguiAuthConfig', $authConfigProvider)
+        .factory('$nguiAuthService', AuthService)
+        .factory('$nguiAuthSecureTokenInjector', SecureTokenInjector)
         .config(['$httpProvider', function ($httpProvider) {
-            $httpProvider.interceptors.push('SecureTokenInjector');
+            $httpProvider.interceptors.push('$nguiAuthSecureTokenInjector');
         }])
         .run(Initer)
         ;

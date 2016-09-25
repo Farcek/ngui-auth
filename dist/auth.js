@@ -47,19 +47,19 @@ var ngui;
                 this.$state = $state;
                 this.$authConfig = $authConfig;
                 this.$cookies = $cookies;
-                this.cnToken = $authConfig.cookieName;
-                this._token = $cookies.get(this.cnToken);
+                this._data = $cookies.getObject($authConfig.cookieName);
+                return this;
             }
             Object.defineProperty(AuthService.prototype, "data", {
                 get: function () {
-                    return '';
+                    return this._data;
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(AuthService.prototype, "token", {
                 get: function () {
-                    return '';
+                    return this._data && this._data.token;
                 },
                 enumerable: true,
                 configurable: true
@@ -67,13 +67,9 @@ var ngui;
             AuthService.prototype.setData = function (data) {
                 this._data = data;
             };
-            AuthService.prototype.setToken = function (token) {
-                this.$cookies.put(this.cnToken, this._token = token);
-            };
             AuthService.prototype.clear = function () {
-                this._token = null;
                 this._data = null;
-                this.$cookies.remove(this.cnToken);
+                this.$cookies.remove(this.$authConfig.cookieName);
             };
             AuthService.prototype.returnToState = function (state) {
                 if (Array.isArray(state) && state.length > 0) {
@@ -88,7 +84,7 @@ var ngui;
                     this.$state.go(this.$authConfig.homeState);
                 }
             };
-            AuthService.$inject = ['$rootScope', '$state', '$authConfig', '$cookies'];
+            AuthService.$inject = ['$rootScope', '$state', '$nguiAuthConfig', '$cookies'];
             return AuthService;
         }());
         auth.AuthService = AuthService;
@@ -96,14 +92,15 @@ var ngui;
             function SecureTokenInjector($q, $injector) {
                 this.$q = $q;
                 this.$injector = $injector;
+                return this;
             }
             SecureTokenInjector.prototype.request = function (config) {
                 if (config.notToken || config.noToken) {
                     return config;
                 }
                 return this.$q(function (resolve, reject) {
-                    var authService = this.$injector.get('$authService');
-                    var authConfig = this.$injector.get('$authConfig');
+                    var authService = this.$injector.get('$nguiAuthService');
+                    var authConfig = this.$injector.get('$nguiAuthConfig');
                     if (config.headers && authService.token) {
                         config.headers[authConfig.headerName] = authConfig.headerPrefix + ' ' + authService.token;
                     }
@@ -135,15 +132,15 @@ var ngui;
                     }
                 });
             }
-            Initer.$inject = ['$rootScope', '$state', '$authService', '$authConfig'];
+            Initer.$inject = ['$rootScope', '$state', '$nguiAuthService', '$nguiAuthConfig'];
             return Initer;
         }());
-        angular.module("ngui-auth", [])
-            .provider('$authConfig', $authConfigProvider)
-            .factory('$authService', AuthService)
-            .factory('$authSecureTokenInjector', SecureTokenInjector)
+        angular.module("ngui-auth", ['ng', 'ngCookies', 'ui.router'])
+            .provider('$nguiAuthConfig', $authConfigProvider)
+            .factory('$nguiAuthService', AuthService)
+            .factory('$nguiAuthSecureTokenInjector', SecureTokenInjector)
             .config(['$httpProvider', function ($httpProvider) {
-                $httpProvider.interceptors.push('SecureTokenInjector');
+                $httpProvider.interceptors.push('$nguiAuthSecureTokenInjector');
             }])
             .run(Initer);
     })(auth = ngui.auth || (ngui.auth = {}));
