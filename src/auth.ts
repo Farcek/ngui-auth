@@ -6,6 +6,7 @@ namespace ngui.auth {
         setCookieName(name: string)
         setHeaderName(name: string)
         setHeaderPrefix(prefix: string)
+        setCookieOption(opt: ng.cookies.ICookiesOptions)
 
     }
     export interface IAuthConfig {
@@ -14,10 +15,12 @@ namespace ngui.auth {
         cookieName: string
         headerName: string
         headerPrefix: string
+        cookieOption: ng.cookies.ICookiesOptions
     }
 
     function $authConfigProvider(): IAuthConfigProvider {
         let loginState = 'login', homeState = 'home', cookieName = '$cid', headerName = 'authorization', headerPrefix = 'Bearer';
+        let cookiesOptions: ng.cookies.ICookiesOptions = null;
         return {
             setLoginState: function (value) {
                 loginState = value;
@@ -33,6 +36,9 @@ namespace ngui.auth {
             },
             setHeaderPrefix: function (value) {
                 headerPrefix = value;
+            },
+            setCookieOption: function (opt) {
+                cookiesOptions = opt;
             },
             $get: function () {
                 return {
@@ -50,6 +56,9 @@ namespace ngui.auth {
                     },
                     get headerPrefix() {
                         return headerPrefix;
+                    },
+                    get cookieOption() {
+                        return cookiesOptions;
                     }
                 };
             }
@@ -83,7 +92,7 @@ namespace ngui.auth {
         }
         setData(data: IAuthData) {
             this._data = data
-            this.$cookies.putObject(this.$authConfig.cookieName, this._data);
+            this.$cookies.putObject(this.$authConfig.cookieName, this._data, this.$authConfig.cookieOption);
         }
         setReturnState(state: string, params?: {}) {
             this._returnState = {
@@ -127,7 +136,7 @@ namespace ngui.auth {
                 },
                 responseError: (response) => {
                     if (response.status === 401) {
-                        var authService: AuthService = $injector.get('$authService');
+                        var authService: AuthService = $injector.get('$nguiAuthService');
                         authService.clear();
                     }
                     return $q.reject(response);

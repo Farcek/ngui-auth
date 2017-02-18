@@ -5,6 +5,7 @@ declare namespace ngui.auth {
         setCookieName(name: string): any;
         setHeaderName(name: string): any;
         setHeaderPrefix(prefix: string): any;
+        setCookieOption(opt: ng.cookies.ICookiesOptions): any;
     }
     interface IAuthConfig {
         loginState: string;
@@ -12,6 +13,7 @@ declare namespace ngui.auth {
         cookieName: string;
         headerName: string;
         headerPrefix: string;
+        cookieOption: ng.cookies.ICookiesOptions;
     }
     interface IAuthData {
         token: string;
@@ -29,10 +31,10 @@ declare namespace ngui.auth {
         private _data;
         private _returnState;
         constructor($state: ng.ui.IStateService, $authConfig: IAuthConfig, $cookies: ng.cookies.ICookiesService);
-        data: IAuthData;
-        token: string;
-        isLogined: boolean;
-        returnState: IReturnState;
+        readonly data: IAuthData;
+        readonly token: string;
+        readonly isLogined: boolean;
+        readonly returnState: IReturnState;
         setData(data: IAuthData): void;
         setReturnState(state: string, params?: {}): void;
         clear(): void;

@@ -4,6 +4,7 @@ var ngui;
     (function (auth) {
         function $authConfigProvider() {
             var loginState = 'login', homeState = 'home', cookieName = '$cid', headerName = 'authorization', headerPrefix = 'Bearer';
+            var cookiesOptions = null;
             return {
                 setLoginState: function (value) {
                     loginState = value;
@@ -19,6 +20,9 @@ var ngui;
                 },
                 setHeaderPrefix: function (value) {
                     headerPrefix = value;
+                },
+                setCookieOption: function (opt) {
+                    cookiesOptions = opt;
                 },
                 $get: function () {
                     return {
@@ -36,6 +40,9 @@ var ngui;
                         },
                         get headerPrefix() {
                             return headerPrefix;
+                        },
+                        get cookieOption() {
+                            return cookiesOptions;
                         }
                     };
                 }
@@ -78,7 +85,7 @@ var ngui;
             });
             AuthService.prototype.setData = function (data) {
                 this._data = data;
-                this.$cookies.putObject(this.$authConfig.cookieName, this._data);
+                this.$cookies.putObject(this.$authConfig.cookieName, this._data, this.$authConfig.cookieOption);
             };
             AuthService.prototype.setReturnState = function (state, params) {
                 this._returnState = {
@@ -101,9 +108,9 @@ var ngui;
                     this.$state.go(this.$authConfig.homeState);
                 }
             };
-            AuthService.$inject = ['$state', '$nguiAuthConfig', '$cookies'];
             return AuthService;
         }());
+        AuthService.$inject = ['$state', '$nguiAuthConfig', '$cookies'];
         auth.AuthService = AuthService;
         var SecureTokenInjector;
         (function (SecureTokenInjector) {
@@ -124,7 +131,7 @@ var ngui;
                     },
                     responseError: function (response) {
                         if (response.status === 401) {
-                            var authService = $injector.get('$authService');
+                            var authService = $injector.get('$nguiAuthService');
                             authService.clear();
                         }
                         return $q.reject(response);
@@ -149,9 +156,9 @@ var ngui;
                     }
                 });
             }
-            Initer.$inject = ['$rootScope', '$state', '$nguiAuthService', '$nguiAuthConfig'];
             return Initer;
         }());
+        Initer.$inject = ['$rootScope', '$state', '$nguiAuthService', '$nguiAuthConfig'];
         angular.module("ngui-auth", ['ng', 'ngCookies', 'ui.router'])
             .provider('$nguiAuthConfig', $authConfigProvider)
             .service('$nguiAuthService', AuthService)
